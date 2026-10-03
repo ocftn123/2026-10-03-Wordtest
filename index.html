@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocabulary Test</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;
+    background:#f5f6f8;
+    color:#222;
+    font-family:Arial,"Noto Sans KR",sans-serif;
+}
+.container{
+    max-width:920px;
+    margin:auto;
+    padding:30px 18px 80px;
+}
+h1{margin:0 0 6px}
+.subtitle{color:#666;margin-bottom:20px}
+
+.top{
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:25px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+button{
+    border:0;
+    border-radius:9px;
+    padding:11px 16px;
+    font-size:15px;
+    cursor:pointer;
+    background:#222;
+    color:#fff;
+    margin:3px;
+}
+button.secondary{
+    background:#e8e9ec;
+    color:#222;
+}
+
+.section{
+    margin-bottom:42px;
+}
+
+.section-header{
+    background:#222;
+    color:#fff;
+    padding:18px 20px;
+    border-radius:14px 14px 0 0;
+}
+
+.section-header h2{
+    margin:0;
+    font-size:21px;
+}
+
+.section-header p{
+    margin:5px 0 0;
+    color:#ccc;
+    font-size:13px;
+}
+
+.question{
+    background:#fff;
+    border:1px solid #ddd;
+    border-top:0;
+    padding:20px;
+}
+
+.question:last-child{
+    border-radius:0 0 14px 14px;
+}
+
+.qno{
+    font-size:13px;
+    color:#777;
+    margin-bottom:7px;
+}
+
+.prompt{
+    font-size:18px;
+    font-weight:bold;
+    line-height:1.65;
+    margin-bottom:15px;
+    white-space:pre-line;
+}
+
+.choice{
+    display:block;
+    border:1px solid #ccc;
+    border-radius:9px;
+    padding:12px;
+    margin:8px 0;
+    cursor:pointer;
+    line-height:1.5;
+}
+
+.choice:hover{
+    background:#f5f5f5;
+}
+
+.choice input{
+    margin-right:8px;
+}
+
+.choice.correct{
+    background:#e9e9e9;
+    border-color:#333;
+}
+
+.choice.wrong{
+    background:#fafafa;
+    border-color:#888;
+}
+
+.answer{
+    display:none;
+    margin-top:10px;
+    padding:10px;
+    background:#f0f1f3;
+    border-radius:8px;
+}
+
+#result{
+    display:none;
+    background:#222;
+    color:white;
+    border-radius:14px;
+    padding:20px;
+    margin:25px 0;
+    line-height:1.7;
+}
+
+.score{
+    font-size:23px;
+    font-weight:bold;
+}
+
+#retryArea{
+    display:none;
+    background:white;
+    border:1px solid #ddd;
+    border-radius:14px;
+    padding:22px;
+    margin-top:25px;
+}
+
+#retryArea h2{
+    margin-top:0;
+}
+
+.word-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin:15px 0;
+}
+
+.word-chip{
+    background:#eee;
+    border-radius:999px;
+    padding:6px 11px;
+    font-size:13px;
+}
+
+.notice{
+    background:#f0f1f3;
+    border-radius:9px;
+    padding:13px;
+    margin:12px 0 18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Vocabulary Test</h1>
+
+<div class="subtitle">
+    4개 유형 × 전체 단어 · 유형별 섹션 · 한 번에 채점 · 오답 단어 반복 재시험
+</div>
+
+<div class="top">
+
+    <div>
+        <strong id="roundTitle">1차 시험</strong><br>
+        <small id="roundDescription">
+            네 개 유형을 모두 푼 뒤 한 번에 채점하세요.
+        </small>
+    </div>
+
+    <div>
+        <button onclick="shuffleSections()">🔀 순서 섞기</button>
+        <button onclick="gradeTest()">채점하기</button>
+        <button class="secondary" onclick="restart()">처음부터</button>
+    </div>
+
+</div>
+
+<div id="quiz"></div>
+
+<div id="result"></div>
+
+<div id="retryArea">
+
+    <h2>🔁 오답 단어 재시험</h2>
+
+    <div class="notice">
+        이번 라운드에서 한 번이라도 틀린 단어입니다.<br>
+        이 단어들만 다음 라운드에서 다시 출제됩니다.
+    </div>
+
+    <div id="wrongWords" class="word-list"></div>
+
+    <button onclick="retryWrongWords()">
+        오답 단어만 재시험
+    </button>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   단어 목록
+========================================================= */
+
+const vocabulary = [
+
+["rent","빌리다"],
+["develop","발전시키다, 성장하다"],
+["upload","~을 전송하다, 업로드하다"],
+["method","방법, 방식"],
+["purchase","구매, 구매품"],
+["recommend","추천하다, 권하다"],
+["trace","흔적, 자취"],
+["analyze","분석하다"],
+["predict","예측하다"],
+["amount","양, 액수"],
+["communication","통신, 의사소통"],
+["flu","독감, 유행성 감기"],
+["influence","영향을 주다"],
+["avoid","피하다"],
+["spread","확산, 전파"],
+["symptom","증상, 징후"],
+["database","데이터베이스"],
+["improve","향상하다, 향상시키다"],
+["include","포함하다"],
+["performance","경기력, 성과"],
+["focus on","~에 주력하다"],
+["crime","범죄"],
+["identify","확인하다, 알아보다"],
+["industry","산업, 공업"],
+["play a role","역할을 하다"],
+["be likely to","~할 것 같다"],
+["dynasty","시대, 왕조"],
+["carp","잉어"],
+["bamboo","대나무"],
+["lotus flower","연꽃"],
+["object","물건, 물체"],
+["symbol","상징, 기호"],
+["loyalty","충실, 충성"],
+["appear","나타나다, 출현하다"],
+["folk painting","민화"],
+["represent","나타내다, 상징하다"],
+["disappointed","실망한"],
+["frozen","얼어붙은"],
+["ill","아픈, 병든"],
+["respect","존경, 경의"],
+["once upon a time","옛날 옛날에"],
+["symbolic","상징적인"],
+["symbolize","상징하다"],
+["bend","굽다, 구부러지다"],
+["bloom","꽃을 피우다, 꽃이 피다"],
+["for this reason","이런 이유 때문에"],
+["despite","~에도 불구하고"],
+["justice","정의, 공정"],
+["thus","그러므로, 따라서"],
+["attitude","태도, 자세"],
+["behavior","행동"],
+["remind ~ of","~에게 …을 상기시키다"],
+["in particular","특히, 특별히"],
+["society","사회"]
+
+];
+
+
+/* =========================================================
+   Cloze 문장
+========================================================= */
+
+const contexts = {
+
+"rent":
+"He decided to ________ a car for the weekend.",
+
+"develop":
+"Students need opportunities to ________ their critical thinking skills.",
+
+"upload":
+"Please ________ the completed assignment to the website.",
+
+"method":
+"This teaching ________ encourages students to work together.",
+
+"purchase":
+"The customer made a large ________ online.",
+
+"recommend":
+"Can you ________ a good book for beginners?",
+
+"trace":
+"The police found a ________ of blood near the door.",
+
+"analyze":
+"Scientists carefully ________ the data before reaching a conclusion.",
+
+"predict":
+"Experts cannot accurately ________ what will happen next.",
+
+"amount":
+"Only a small ________ of water remained.",
+
+"communication":
+"Good ________ is essential for successful teamwork.",
+
+"flu":
+"She stayed home because she had the ________.",
+
+"influence":
+"Parents can strongly ________ their children's behavior.",
+
+"avoid":
+"Try to ________ unnecessary arguments.",
+
+"spread":
+"The rapid ________ of the virus worried officials.",
+
+"symptom":
+"Fever can be a common ________ of the flu.",
+
+"database":
+"The information is stored in a large ________.",
+
+"improve":
+"Regular practice can ________ your English skills.",
+
+"include":
+"The price does not ________ delivery fees.",
+
+"performance":
+"The athlete's ________ improved significantly this year.",
+
+"focus on":
+"We need to ________ the most important problem.",
+
+"crime":
+"The police are investigating a serious ________.",
+
+"identify":
+"The witness helped police ________ the suspect.",
+
+"industry":
+"The automobile ________ employs millions of people.",
+
+"play a role":
+"Education can ________ in reducing social inequality.",
+
+"be likely to":
+"Students who practice regularly are ________ succeed.",
+
+"dynasty":
+"The museum contains artifacts from an ancient ________.",
+
+"carp":
+"The pond was filled with colorful ________.",
+
+"bamboo":
+"Pandas mainly eat ________.",
+
+"lotus flower":
+"The ________ is often associated with purity.",
+
+"object":
+"The mysterious ________ was found on the floor.",
+
+"symbol":
+"The dove is often used as a ________ of peace.",
+
+"loyalty":
+"The company values employee ________.",
+
+"appear":
+"A rainbow suddenly began to ________ in the sky.",
+
+"folk painting":
+"The museum displayed a traditional Korean ________.",
+
+"represent":
+"The dove can ________ peace.",
+
+"disappointed":
+"She was deeply ________ by the result.",
+
+"frozen":
+"The lake was completely ________ during the winter.",
+
+"ill":
+"He stayed home because he was ________.",
+
+"respect":
+"Students should show ________ for their teachers.",
+
+"once upon a time":
+"________, there lived a young princess in a distant kingdom.",
+
+"symbolic":
+"The ceremony was highly ________ of the country's history.",
+
+"symbolize":
+"The white dove can ________ peace.",
+
+"bend":
+"Be careful not to ________ the metal bar.",
+
+"bloom":
+"The flowers usually ________ in early spring.",
+
+"for this reason":
+"The road was dangerous; ________, we chose another route.",
+
+"despite":
+"________ the heavy rain, the game continued.",
+
+"justice":
+"The court is responsible for protecting ________.",
+
+"thus":
+"The evidence was incomplete; ________, the case was dismissed.",
+
+"attitude":
+"His positive ________ helped him overcome difficulties.",
+
+"behavior":
+"Parents often influence their children's ________.",
+
+"remind ~ of":
+"This song ________ me ________ my childhood.",
+
+"in particular":
+"I enjoy classical music, ________ piano concertos.",
+
+"society":
+"Education plays an important role in ________."
+};
+
+
+/* =========================================================
+   영어 정의 / 의미 관계형
+========================================================= */
+
+const definitions = {
+
+"rent":"to pay to use something for a limited period of time",
+"develop":"to grow or cause something to grow or become more advanced",
+"upload":"to transfer data from a computer or device to another system",
+"method":"a particular way of doing something",
+"purchase":"something that is bought, or the act of buying something",
+"recommend":"to suggest something as good or suitable",
+"trace":"a small sign or indication that something existed or happened",
+"analyze":"to examine something carefully in order to understand it",
+"predict":"to say what is likely to happen in the future",
+"amount":"a quantity of something",
+"communication":"the exchange of information, ideas, or feelings",
+"flu":"an infectious illness that affects the respiratory system",
+"influence":"to affect the way someone or something develops or behaves",
+"avoid":"to keep away from something or prevent something from happening",
+"spread":"the process of becoming more widely distributed or common",
+"symptom":"a sign of an illness or problem",
+"database":"an organized collection of information stored electronically",
+"improve":"to become or make something better",
+"include":"to contain something as part of a whole",
+"performance":"how well a person or thing does something",
+"focus on":"to give particular attention or effort to something",
+"crime":"an illegal act",
+"identify":"to recognize or establish who or what someone or something is",
+"industry":"a particular area of business or economic activity",
+"play a role":"to have a part or influence in a situation",
+"be likely to":"to probably do or experience something",
+"dynasty":"a period ruled by a succession of rulers from the same family",
+"carp":"a freshwater fish commonly found in ponds and rivers",
+"bamboo":"a tall plant with hollow jointed stems",
+"lotus flower":"a water plant with large flowers, often associated with purity",
+"object":"a material thing that can be seen or touched",
+"symbol":"something that represents an idea or quality",
+"loyalty":"the quality of being faithful or devoted",
+"appear":"to become visible or come into existence",
+"folk painting":"traditional painting created in a popular or local style",
+"represent":"to stand for or show something",
+"disappointed":"feeling sad because something was not as good as expected",
+"frozen":"turned into ice or made extremely cold",
+"ill":"sick or suffering from a disease",
+"respect":"admiration or consideration for someone or something",
+"once upon a time":"a traditional phrase used to begin a fairy tale",
+"symbolic":"representing something else in a meaningful way",
+"symbolize":"to represent an idea, quality, or concept",
+"bend":"to make something curved or change direction",
+"bloom":"to produce flowers or become fully developed",
+"for this reason":"because of the reason just mentioned",
+"despite":"without being prevented by something; even though",
+"justice":"fair treatment according to moral or legal principles",
+"thus":"as a result; therefore",
+"attitude":"a person's way of thinking or feeling about something",
+"behavior":"the way a person or animal acts",
+"remind ~ of":"to cause someone to remember someone or something",
+"in particular":"especially; specifically",
+"society":"a community of people living together under shared institutions"
+};
+
+
+/* =========================================================
+   유틸리티
+========================================================= */
+
+function shuffle(array){
+
+    for(let i=array.length-1;i>0;i--){
+
+        const j=Math.floor(Math.random()*(i+1));
+
+        [array[i],array[j]]=[array[j],array[i]];
+
+    }
+
+    return array;
+}
+
+
+function esc(text){
+
+    return String(text)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+
+}
+
+
+function meaning(word){
+
+    return vocabulary.find(x=>x[0]===word)[1];
+
+}
+
+
+const allWords=vocabulary.map(x=>x[0]);
+
+
+/* =========================================================
+   문제 생성
+========================================================= */
+
+function makeQuestions(words){
+
+    let result=[];
+
+    words.forEach(word=>{
+
+        const korean=meaning(word);
+
+        const otherWords=
+            allWords.filter(x=>x!==word);
+
+
+        /* -----------------------------------------
+           ① 영어 → 한국어
+        ----------------------------------------- */
+
+        let meaningChoices=
+            otherWords.map(x=>meaning(x));
+
+        shuffle(meaningChoices);
+
+        result.push({
+
+            type:"ENKO",
+            word:word,
+            prompt:word,
+            choices:shuffle([
+                korean,
+                ...meaningChoices.slice(0,4)
+            ]),
+            answer:korean
+
+        });
+
+
+        /* -----------------------------------------
+           ② 한국어 → 영어
+        ----------------------------------------- */
+
+        let wordChoices=[...otherWords];
+
+        shuffle(wordChoices);
+
+        result.push({
+
+            type:"KOEN",
+            word:word,
+            prompt:korean,
+            choices:shuffle([
+                word,
+                ...wordChoices.slice(0,4)
+            ]),
+            answer:word
+
+        });
+
+
+        /* -----------------------------------------
+           ③ Cloze
+        ----------------------------------------- */
+
+        let clozeChoices=[...otherWords];
+
+        shuffle(clozeChoices);
+
+        result.push({
+
+            type:"CLOZE",
+            word:word,
+            prompt:contexts[word],
+            choices:shuffle([
+                word,
+                ...clozeChoices.slice(0,4)
+            ]),
+            answer:word
+
+        });
+
+
+        /* -----------------------------------------
+           ④ 의미 관계 / 영어 정의
+        ----------------------------------------- */
+
+        let definitionChoices=
+            otherWords.map(x=>definitions[x]);
+
+        shuffle(definitionChoices);
+
+        result.push({
+
+            type:"RELATION",
+            word:word,
+            prompt:
+                `Which description best matches "${word}"?`,
+            choices:shuffle([
+                definitions[word],
+                ...definitionChoices.slice(0,4)
+            ]),
+            answer:definitions[word]
+
+        });
+
+    });
+
+    return result;
+
+}
+
+
+/* =========================================================
+   섹션별 렌더링
+========================================================= */
+
+const TYPE_NAMES={
+
+    ENKO:"① 영어 → 한국어",
+
+    KOEN:"② 한국어 → 영어",
+
+    CLOZE:"③ Cloze / 문맥형",
+
+    RELATION:"④ 의미 관계형"
+
+};
+
+
+function render(){
+
+    questions=makeQuestions(currentWords);
+
+    renderQuestions();
+
+}
+
+
+function renderQuestions(){
+
+    const quiz=
+        document.getElementById("quiz");
+
+    quiz.innerHTML="";
+
+
+    const types=[
+        "ENKO",
+        "KOEN",
+        "CLOZE",
+        "RELATION"
+    ];
+
+
+    types.forEach(type=>{
+
+        const section=
+            document.createElement("div");
+
+        section.className="section";
+
+
+        const sectionQuestions=
+            questions.filter(q=>q.type===type);
+
+
+        let html=`
+
+            <div class="section-header">
+
+                <h2>
+                    ${TYPE_NAMES[type]}
+                </h2>
+
+                <p>
+                    ${sectionQuestions.length}문항
+                </p>
+
+            </div>
+
+        `;
+
+
+        sectionQuestions.forEach(q=>{
+
+            const index=
+                questions.indexOf(q);
+
+
+            let choices="";
+
+
+            q.choices.forEach(
+                (choice,i)=>{
+
+                    choices+=`
+
+                        <label class="choice">
+
+                            <input
+                                type="radio"
+                                name="question-${index}"
+                                value="${esc(choice)}"
+                            >
+
+                            ${String.fromCharCode(65+i)}.
+                            ${esc(choice)}
+
+                        </label>
+
+                    `;
+
+                }
+            );
+
+
+            html+=`
+
+                <div
+                    class="question"
+                    data-index="${index}"
+                >
+
+                    <div class="qno">
+                        Q${index+1}
+                    </div>
+
+                    <div class="prompt">
+                        ${esc(q.prompt)}
+                    </div>
+
+                    ${choices}
+
+                    <div class="answer"></div>
+
+                </div>
+
+            `;
+
+        });
+
+
+        section.innerHTML=html;
+
+        quiz.appendChild(section);
+
+    });
+
+}
+
+
+/* =========================================================
+   섹션은 유지하고 문제 순서만 섞기
+========================================================= */
+
+function shuffleSections(){
+
+    const types=[
+        "ENKO",
+        "KOEN",
+        "CLOZE",
+        "RELATION"
+    ];
+
+
+    let newQuestions=[];
+
+
+    types.forEach(type=>{
+
+        let sectionQuestions=
+            questions.filter(
+                q=>q.type===type
+            );
+
+        shuffle(sectionQuestions);
+
+        newQuestions.push(
+            ...sectionQuestions
+        );
+
+    });
+
+
+    questions=newQuestions;
+
+    renderQuestions();
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+/* =========================================================
+   채점
+========================================================= */
+
+let questions=[];
+
+let currentWords=
+    allWords.slice();
+
+let round=1;
+
+let graded=false;
+
+
+function gradeTest(){
+
+    if(graded)return;
+
+
+    const cards=
+        document.querySelectorAll(".question");
+
+
+    let score=0;
+
+    let unanswered=0;
+
+    const wrongWords=
+        new Set();
+
+
+    cards.forEach(card=>{
+
+        const index=
+            Number(card.dataset.index);
+
+        const question=
+            questions[index];
+
+
+        const selected=
+            card.querySelector(
+                "input:checked"
+            );
+
+
+        const choices=
+            card.querySelectorAll(
+                ".choice"
+            );
+
+
+        choices.forEach(choice=>{
+
+            choice.classList.remove(
+                "correct",
+                "wrong"
+            );
+
+        });
+
+
+        if(!selected){
+
+            unanswered++;
+
+            wrongWords.add(
+                question.word
+            );
+
+        }
+
+        else if(
+            selected.value===
+            question.answer
+        ){
+
+            score++;
+
+            selected
+                .parentElement
+                .classList.add("correct");
+
+        }
+
+        else{
+
+            wrongWords.add(
+                question.word
+            );
+
+            selected
+                .parentElement
+                .classList.add("wrong");
+
+        }
+
+
+        choices.forEach(choice=>{
+
+            const input=
+                choice.querySelector("input");
+
+
+            if(
+                input.value===
+                question.answer
+            ){
+
+                choice.classList.add(
+                    "correct"
+                );
+
+            }
+
+        });
+
+
+        const answer=
+            card.querySelector(".answer");
+
+
+        answer.style.display="block";
+
+        answer.innerHTML=`
+
+            정답:
+            <strong>
+                ${esc(question.answer)}
+            </strong>
+
+        `;
+
+    });
+
+
+    graded=true;
+
+
+    const total=
+        cards.length;
+
+
+    const percentage=
+        Math.round(
+            score/total*100
+        );
+
+
+    const result=
+        document.getElementById("result");
+
+
+    result.style.display="block";
+
+
+    result.innerHTML=`
+
+        <div class="score">
+            ${score} / ${total}
+            (${percentage}점)
+        </div>
+
+        <div>
+            미응답: ${unanswered}개
+        </div>
+
+        <div>
+            오답 단어:
+            <strong>
+                ${wrongWords.size}개
+            </strong>
+        </div>
+
+    `;
+
+
+    const retryArea=
+        document.getElementById(
+            "retryArea"
+        );
+
+
+    retryArea.style.display="block";
+
+
+    const wordList=
+        document.getElementById(
+            "wrongWords"
+        );
+
+
+    wordList.innerHTML="";
+
+
+    [...wrongWords]
+        .sort()
+        .forEach(word=>{
+
+            const chip=
+                document.createElement("span");
+
+            chip.className="word-chip";
+
+            chip.textContent=word;
+
+            wordList.appendChild(chip);
+
+        });
+
+
+    retryArea.dataset.words=
+        JSON.stringify(
+            [...wrongWords]
+        );
+
+
+    if(wrongWords.size===0){
+
+        retryArea.innerHTML=`
+
+            <h2>
+                🎉 완벽합니다!
+            </h2>
+
+            <div class="notice">
+                이번 라운드의 모든 단어를
+                정확하게 맞혔습니다.
+            </div>
+
+        `;
+
+    }
+
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+/* =========================================================
+   오답 단어만 재시험
+========================================================= */
+
+function retryWrongWords(){
+
+    const retryArea=
+        document.getElementById(
+            "retryArea"
+        );
+
+
+    const words=
+        JSON.parse(
+            retryArea.dataset.words ||
+            "[]"
+        );
+
+
+    if(words.length===0)return;
+
+
+    currentWords=words;
+
+    round++;
+
+
+    document.getElementById(
+        "roundTitle"
+    ).textContent=
+        `${round}차 재시험`;
+
+
+    document.getElementById(
+        "roundDescription"
+    ).textContent=
+
+        `${words.length}개 단어만 남았습니다. `+
+        `다시 네 개 유형 전체를 풉니다.`;
+
+
+    graded=false;
+
+    render();
+
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+/* =========================================================
+   처음부터
+========================================================= */
+
+function restart(){
+
+    round=1;
+
+    currentWords=
+        allWords.slice();
+
+
+    document.getElementById(
+        "roundTitle"
+    ).textContent=
+        "1차 시험";
+
+
+    document.getElementById(
+        "roundDescription"
+    ).textContent=
+        "네 개 유형을 모두 푼 뒤 한 번에 채점하세요.";
+
+
+    graded=false;
+
+    render();
+
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+/* =========================================================
+   시작
+========================================================= */
+
+render();
+
+</script>
+
+</body>
+</html>
